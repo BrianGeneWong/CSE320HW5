@@ -7,13 +7,20 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+
+typdef struct virt_addr{
+	uint64_t allocated :1;
+	uint64_t phy_addr;
+
+}virt_addr;
 typedef struct addr{
-	uint32_t valid :10;
-	uint32_t entry :10;
+	uint32_t first :10;
+	uint32_t second :10;
 	uint32_t zeroes:12;
 }addr;
 typedef struct page_two{
-	uint32_t addr[1024];
+	virt_addr addr[256];
 }page_two;
 
 
@@ -24,12 +31,16 @@ typedef struct page_one{
 }page_one;
 page_one process_array[4];
 
+uint64_t cse320_virt_to_phys(){
 
-void cse320_malloc(){
-
+	uint64_t total_byte=va.first;
+	total_byte+=va.second;
+	return total_byte;
 }
-void cse320_virt_to_phys(){
 
+void cse320_malloc(virt_addr va){
+
+	
 }
 void *thread(void *vargp){
 //	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -55,7 +66,7 @@ void printThreads(){
 int main(){
 	char* command= malloc(255);
 	while(1){
-		printThreads();
+	//	printThreads();
 		printf("Input Command: ");
                 fgets(command,255,stdin);
                 char* tok;
@@ -73,10 +84,7 @@ int main(){
 			int loop=0;
 			while(!loop &&  i<4){
 				if(process_array[i].pid==0){
-					page_one newpage;
-					pthread_create(&newpage.pid,NULL,thread,NULL);
-					process_array[i]=newpage;
-
+					pthread_create(&process_array[i].pid,NULL,thread,NULL);
 					page_two newpagetwo;
 					process_array[i].second_table=&newpagetwo;
 					
@@ -86,14 +94,43 @@ int main(){
 			}
 		}
 		else if(strcmp(tok,"list")==0){
+			int i=0;
+			while(i<4){
+				if (process_array[i].pid!=0){
+					printf("%lu\n",process_array[i].pid);
+				}
+				i++;
 
-
+			}
 		}
 		else if(strcmp(tok,"mem")==0){
 
 		}
 		else if (strcmp(tok,"allocate")==0){
 			tok=strtok(NULL," ");
+			char* ptr;
+			int found=0;
+			uint64_t newpid= strtoul(tok,&ptr,10);
+			//go through and find the process
+			int i=0;
+			for(i;i<4;i++){
+				if (process_array[i].pid==newpid){
+					int found=1;
+					int j=0;
+					//go into second page table and allocated a space
+					while(process_array[i].second_table->addr[j].valid!=0 && j<256){
+							
+						j++;
+					}
+					if(j=256){
+						perror("No more unallocated addresses");
+					{
+					process_array[i].second_table->addr[j].valid==1;
+				}
+			}
+			if(!found){
+				perror("Process not found\n");
+			}
 		}
 		else if (strcmp(tok,"read")==0){
 		}
@@ -110,14 +147,14 @@ int main(){
 				if(process_array[i].pid==killpid){
 					pthread_cancel(process_array[i].pid);
 					kill=1;
-					process_array[i].pid==0;
+					process_array[i].pid=0;
 
 					//FLUSH THE TABLE AND SHIT LATER
 				}
 				i++;
 			}
 			if(!kill){
-				printf("Error, id does not exist\n");
+				perror("Error, id does not exist\n");
 			}
 			
 
