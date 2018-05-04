@@ -12,16 +12,16 @@ typedef struct addr{
 	uint32_t entry :10;
 	uint32_t zeroes:12;
 }addr;
+typedef struct page_two{
+	uint32_t addr[1024];
+}page_two;
+
 
 typedef struct page_one{
 	pthread_t pid;
 	uint32_t valid:1;
-	uint32_t *page_two[4];
+	page_two *second_table;
 }page_one;
-typedef struct page_two{
-	uint32_t addr[64];
-}page_two;
-
 page_one process_array[4];
 
 
@@ -32,6 +32,8 @@ void cse320_virt_to_phys(){
 
 }
 void *thread(void *vargp){
+//	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
 	while(1){
 
 	}
@@ -74,6 +76,10 @@ int main(){
 					page_one newpage;
 					pthread_create(&newpage.pid,NULL,thread,NULL);
 					process_array[i]=newpage;
+
+					page_two newpagetwo;
+					process_array[i].second_table=&newpagetwo;
+					
 					loop=1;	
 				}
 				i++;
@@ -87,19 +93,31 @@ int main(){
 
 		}
 		else if (strcmp(tok,"allocate")==0){
+			tok=strtok(NULL," ");
 		}
 		else if (strcmp(tok,"read")==0){
 		}
-		else if (strcmp(tok,"write")){
+		else if (strcmp(tok,"write")==0){
 		}
 		
 		else if(strcmp(tok,"kill")==0){	
 			tok=strtok(NULL," ");
+			char* ptr;
+			uint64_t killpid=strtoul(tok,&ptr,10);
 			int i=0;
-			while(i<4){
-				if(process_array[i].pid!=0)
+			int kill=0;
+			while(i<4&&!kill){
+				if(process_array[i].pid==killpid){
 					pthread_cancel(process_array[i].pid);
+					kill=1;
+					process_array[i].pid==0;
+
+					//FLUSH THE TABLE AND SHIT LATER
+				}
 				i++;
+			}
+			if(!kill){
+				printf("Error, id does not exist\n");
 			}
 			
 
