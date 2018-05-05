@@ -15,6 +15,9 @@ char buf2[255];
 char* tok;
 uint64_t addr;
 char* ptr;
+
+char* oob_error= "error,address out of range";
+char* align_error="error,address is not aligned";
 int main(){
 	mem=malloc(1024);
 	char *fifo="fifo";
@@ -31,11 +34,12 @@ int main(){
 			addr=strtoul(tok,&ptr,10);
 			if(addr%4!=0){
 				fd=open(fifo,O_WRONLY);
-				//pass errror message?							
+				//pass errror message?
+				write(fd,align_error,sizeof(align_error));							
 			}
 			else if (addr<0 || addr>1023){
 				//fd=open(fifo,O_WRONLY);
-
+				write(fd,oob_error,sizeof(oob_error));
 			}
 			else{
 			//	fd=open(fifo,O_WRONLY);
@@ -48,10 +52,12 @@ int main(){
 			addr=strtoul(tok,&ptr,10);
 			if(addr%4!=0){
 			//	fd=open(fifo,O_WRONLY);
+				write(fd,align_error,sizeof(align_error));							
 						
 			}
 			else if (addr<0 || addr>1023){
 			//	fd=open(fifo,O_WRONLY);
+				write(fd,oob_error,sizeof(oob_error));
 
 			}
 			else{

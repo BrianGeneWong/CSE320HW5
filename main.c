@@ -9,9 +9,9 @@
 #include <sys/stat.h>
 
 
-typdef struct virt_addr{
-	uint64_t allocated :1;
-	uint64_t phy_addr;
+typedef struct virt_addr{
+	uint64_t valid :1;
+	int phy_addr;
 
 }virt_addr;
 typedef struct addr{
@@ -31,7 +31,7 @@ typedef struct page_one{
 }page_one;
 page_one process_array[4];
 
-uint64_t cse320_virt_to_phys(){
+uint64_t cse320_virt_to_phys(addr va){
 
 	uint64_t total_byte=va.first;
 	total_byte+=va.second;
@@ -39,12 +39,13 @@ uint64_t cse320_virt_to_phys(){
 }
 
 void cse320_malloc(virt_addr va){
+	
 
 	
 }
 void *thread(void *vargp){
 //	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
 	while(1){
 
 	}
@@ -75,7 +76,10 @@ int main(){
                         *replace=0;
                 }
 		tok=strtok(command," ");
-                if(strcmp(tok,"exit")==0){
+		if(tok==NULL){
+			printf("Please input a command\n");
+		}
+                else if(strcmp(tok,"exit")==0){
 			int i=0;
 			exit(0);
                 }
@@ -115,22 +119,27 @@ int main(){
 			int i=0;
 			for(i;i<4;i++){
 				if (process_array[i].pid==newpid){
-					int found=1;
+					found=1;
 					int j=0;
+					int allocated=0;
 					//go into second page table and allocated a space
-					while(process_array[i].second_table->addr[j].valid!=0 && j<256){
-							
+					while(allocated==0 && j<256){
+
+						if(process_array[i].second_table->addr[j].valid==0){
+							allocated=1;
+							process_array[i].second_table->addr[j].valid=1;
+							int index =((i*256)+(j*4));
+							process_array[i].second_table->addr[j].phy_addr=index;
+							printf("allocated address %d\n",index);
+						}
 						j++;
 					}
-					if(j=256){
-						perror("No more unallocated addresses");
-					{
-					process_array[i].second_table->addr[j].valid==1;
 				}
 			}
-			if(!found){
-				perror("Process not found\n");
+			if(found==0){
+				printf("Process not found\n");
 			}
+			
 		}
 		else if (strcmp(tok,"read")==0){
 		}
