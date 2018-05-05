@@ -10,15 +10,16 @@
 
 
 typedef struct virt_addr{
-	uint64_t valid :1;
+	uint32_t valid :1;
 	int phy_addr;
 
 }virt_addr;
+/*
 typedef struct addr{
 	uint32_t first :10;
 	uint32_t second :10;
 	uint32_t zeroes:12;
-}addr;
+}addr;*/
 typedef struct page_two{
 	virt_addr addr[256];
 }page_two;
@@ -26,21 +27,23 @@ typedef struct page_two{
 
 typedef struct page_one{
 	pthread_t pid;
-	uint32_t valid:1;
 	page_two *second_table;
 }page_one;
 page_one process_array[4];
-
+/*
 uint64_t cse320_virt_to_phys(addr va){
 
 	uint64_t total_byte=va.first;
 	total_byte+=va.second;
 	return total_byte;
 }
-
-void cse320_malloc(virt_addr va){
-	
-
+*/
+//args: process index, 2nd table index
+void cse320_malloc(int i, int j){
+	process_array[i].second_table->addr[j].valid=1;
+	int index =((i*256)+(j*4));
+	process_array[i].second_table->addr[j].phy_addr=index;
+	printf("allocated address %d\n",index);
 	
 }
 void *thread(void *vargp){
@@ -57,7 +60,6 @@ void printThreads(){
 	for(i;i<4;i++){
 		printf("PROCESS INDEX %d\n",i);
 		printf("pid= %lu\n",process_array[i].pid);
-		printf("valid = %d\n",process_array[i].valid);
 		printf("\n");
 	}
 	
@@ -66,6 +68,9 @@ void printThreads(){
 //pthread_t thread_array[4];
 int main(){
 	char* command= malloc(255);
+	char* fifo="fifo";
+	mkfifo(fifo,0666); 
+
 	while(1){
 	//	printThreads();
 		printf("Input Command: ");
@@ -86,13 +91,17 @@ int main(){
 		else if(strcmp(tok, "create")==0){
 			int i=0;
 			int loop=0;
-			while(!loop &&  i<4){
+			while(loop==0 &&  i<4){
 				if(process_array[i].pid==0){
 					pthread_create(&process_array[i].pid,NULL,thread,NULL);
 					page_two newpagetwo;
+				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
 					process_array[i].second_table=&newpagetwo;
-					
-					loop=1;	
+					loop=1; 
+					newpagetwo.addr[0].valid=0;
+						
+				//	printf("create process %lu \n",process_array[i].pid);
+				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
 				}
 				i++;
 			}
@@ -117,29 +126,32 @@ int main(){
 			uint64_t newpid= strtoul(tok,&ptr,10);
 			//go through and find the process
 			int i=0;
-			for(i;i<4;i++){
-				if (process_array[i].pid==newpid){
-					found=1;
-					int j=0;
-					int allocated=0;
-					//go into second page table and allocated a space
-					while(allocated==0 && j<256){
-
-						if(process_array[i].second_table->addr[j].valid==0){
-							allocated=1;
-							process_array[i].second_table->addr[j].valid=1;
-							int index =((i*256)+(j*4));
-							process_array[i].second_table->addr[j].phy_addr=index;
-							printf("allocated address %d\n",index);
+			if (tok!=NULL){
+				for(i;i<4;i++){
+					if (process_array[i].pid==newpid){
+						found=1;
+						int j=0;
+						int allocated=0;
+						//go into second page table and allocated a space
+						while(allocated==0 && j<256){
+							printf("j is current %d\n",j);
+							printf("valid bit is %d",process_array[i].second_table->addr[j].valid);
+							if(process_array[i].second_table->addr[j].valid==0){
+								allocated=1;
+								cse320_malloc(i,j);
+							}
+							j++;
 						}
-						j++;
 					}
 				}
+				if(found==0){
+					printf("Process not found\n");
+				}
 			}
-			if(found==0){
-				printf("Process not found\n");
+			else{
+
+				printf("please input process X\n");
 			}
-			
 		}
 		else if (strcmp(tok,"read")==0){
 		}
