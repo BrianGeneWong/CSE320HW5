@@ -19,18 +19,23 @@ char* ptr;
 char* oob_error= "error,address out of range";
 char* align_error="error,address is not aligned";
 int main(){
+	sleep(5);
 	mem=malloc(1024);
 	char *fifo="fifo";
 	mkfifo(fifo,0666);
 	
 	while(1){
 		fd=open(fifo,O_RDONLY);
-		read(fd,buf,sizeof(buf));
-		tok=strtok(buf," ");
+		read(fd,buf,255);
+		printf("%s\n",buf);
+		tok=strtok(buf,",");
 		close(fd);
-		if (strcmp(tok,"read")==0){
+		if(tok==NULL){
+
+		}
+		else if (strcmp(tok,"read")==0){
 			//get address
-			tok=strtok(NULL," ");
+			tok=strtok(NULL,",");
 			addr=strtoul(tok,&ptr,10);
 			if(addr%4!=0){
 				fd=open(fifo,O_WRONLY);
@@ -43,26 +48,37 @@ int main(){
 			}
 			else{
 			//	fd=open(fifo,O_WRONLY);
+				printf("READING STUFF\n");
 
 			}
 		}
 
 		else if (strcmp(tok,"write")==0){
-			tok=strtok(NULL," ");
+			printf("WE IN WRITE BOIS\n");
+			tok=strtok(NULL,",");
+			printf("tok: %s\n",tok);
 			addr=strtoul(tok,&ptr,10);
 			if(addr%4!=0){
-			//	fd=open(fifo,O_WRONLY);
-				write(fd,align_error,sizeof(align_error));							
+				printf("align error\n");
+				fd=open(fifo,O_WRONLY);
+				write(fd,align_error,sizeof(align_error));
+				close(fd);					
 						
 			}
 			else if (addr<0 || addr>1023){
-			//	fd=open(fifo,O_WRONLY);
+				printf("oob error\n");
+				fd=open(fifo,O_WRONLY);
 				write(fd,oob_error,sizeof(oob_error));
-
+				close(fd);
 			}
 			else{
 
+				
 			}
+
+		}
+		else{
+
 
 		}
 		
