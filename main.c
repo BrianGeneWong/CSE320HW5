@@ -30,13 +30,6 @@ typedef struct page_one{
 	page_two *second_table;
 }page_one;
 page_one process_array[4];
-
-void index_to_va(int i,int j){
-	//first print 10 zeroes
-	printf("0000000000");
-	
-
-}
 int cse320_virt_to_phys(char* str){
 	//get the middle 10 bits
 	int convert=0;
@@ -53,7 +46,7 @@ int cse320_virt_to_phys(char* str){
 		power=power/2;
 		str++;
 	}
-	return convert;
+	return (convert*4);
 }
 
 //args: process index, 2nd table index
@@ -196,8 +189,8 @@ int main(){
 										power=power/2;
 									}
 								}
-								printf("\n");
-						//		printf("000000000000\n");
+								
+								printf("000000000000\n");
 			
 							}
 						}			
@@ -256,8 +249,24 @@ int main(){
 						if(tok==NULL)
 							printf("Virtual address Y needed\n");
 						else{
-							uint64_t va= strtoul(tok,&ptr,10);
-							
+								char* buf=malloc(255);
+								strcpy(buf,"read,");
+								int retval=cse320_virt_to_phys(tok);
+								printf("retval is: %d\n",retval);
+								char* retval_string=malloc(10);
+								sprintf(retval_string,"%d",retval);
+								strcat(buf,retval_string);	
+								fd=open(fifo,O_WRONLY);
+								printf("final string is: %s\n",buf);
+								write(fd,buf,255);
+								close(fd);
+								memset(buf,0,255);	
+								fd=open(fifo,O_RDONLY);
+								read(fd,buf,255);
+								close(fd);
+								printf("%d\n",atoi(buf));			
+								free(buf);
+	
 						}	
 					}
 				}

@@ -38,29 +38,6 @@ int main(){
 			tok=strtok(NULL,",");
 			addr=strtoul(tok,&ptr,10);
 			if(addr%4!=0){
-				fd=open(fifo,O_WRONLY);
-				//pass errror message?
-				write(fd,align_error,sizeof(align_error));							
-			}
-			else if (addr<0 || addr>1023){
-				//fd=open(fifo,O_WRONLY);
-				write(fd,oob_error,sizeof(oob_error));
-			}
-			else{
-			//	fd=open(fifo,O_WRONLY);
-				printf("READING STUFF\n");
-
-			}
-		}
-
-		else if (strcmp(tok,"write")==0){
-			printf("WE IN WRITE BOIS\n");
-			tok=strtok(NULL,",");
-			printf("tok: %s\n",tok);
-			addr=strtoul(tok,&ptr,10);
-			tok=strtok(NULL,",");
-			int value=atoi(tok);
-			if(addr%4!=0){
 				printf("align error\n");
 				fd=open(fifo,O_WRONLY);
 				write(fd,align_error,sizeof(align_error));
@@ -74,17 +51,34 @@ int main(){
 				close(fd);
 			}
 			else{
+			//	fd=open(fifo,O_WRONLY);
+				printf("READING STUFF\n");
+				int* tmp=(int*)mem;
+				int retval=*(tmp+addr);
+				sprintf(buf2,"%d",retval);
+				printf("return value is %d\n",retval);
+				fd=open(fifo,O_WRONLY);
+				write(fd,buf2,255);
+				close(fd);
 
 				
 			}
+		}
+
+		else if (strcmp(tok,"write")==0){
+			printf("WE IN WRITE BOIS\n");
+			tok=strtok(NULL,",");
+			printf("tok: %s\n",tok);
+			addr=strtoul(tok,&ptr,10);
+			tok=strtok(NULL,",");
+			int value=atoi(tok);
+			
+			int *tmp= mem+addr;
+			*tmp=value;	
+		
 
 		}
-		else{
-
-
-		}
-		
-		
+		memset(buf,0,255);
 	}
 	free(mem);
 	return 0;
