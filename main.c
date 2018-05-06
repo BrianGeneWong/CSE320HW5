@@ -61,7 +61,7 @@ void cse320_malloc(int i, int j){
 	process_array[i].second_table->addr[j].valid=1;
 	int index =((i*256)+(j*4));
 	process_array[i].second_table->addr[j].phy_addr=index;
-	printf("allocated address %d\n",index);
+	printf("i= %d, j=%d allocated address %d\n",i,j,index);
 	
 }
 void *thread(void *vargp){
@@ -81,6 +81,15 @@ void printThreads(){
 		printf("\n");
 	}
 	
+}
+void printvalids(int i){
+	int j=0;
+	for (j;j<255;j++){
+		if(process_array[i].second_table->addr[j].valid==1)
+			printf("%d %d  phy_addr: %d\n",i,j,process_array[i].second_table->addr[j].phy_addr);
+
+	}
+
 }
 //takes process array index
 void clearMem(int i){
@@ -122,11 +131,18 @@ int main(){
 					page_two newpagetwo;
 				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
 					process_array[i].second_table=&newpagetwo;
-					loop=1; 
-					newpagetwo.addr[0].valid=0;
-						
+					loop=1; 	
 				//	printf("create process %lu \n",process_array[i].pid);
 				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
+			
+					//go through and initialize everything
+					int j=0;
+					for (j;j<256;j++){
+
+						process_array[i].second_table->addr[j].valid=0;
+						process_array[i].second_table->addr[j].phy_addr=0;
+
+					}
 				}
 				i++;
 			}
@@ -149,12 +165,40 @@ int main(){
 			int i=0;
 			if (tok!=NULL){	
 				uint64_t newpid= strtoul(tok,&ptr,10);
+				int found =0;
 				for(i;i<4;i++){
 					if (process_array[i].pid==newpid){
+						found=1;
+						printvalids(i);
 						int j=0;
 						for(j;j<256;j++){
 							if(process_array[i].second_table->addr[j].valid==1){
-								//cse320_virt_to_phys()
+								//first 10 digits always 1 for us
+						//		printf("0000000000");
+								int middle=0;
+								middle+=(i*256);
+								middle+=(j*4);
+
+								
+						//		printf("i: %d j: %d middle: %d\n",i,j,middle);
+								if(middle==0){
+									printf("0000000000");
+								}
+								else{
+									int power=512;
+									while(power>0){
+										if(middle/power==0)
+											printf("0");
+										else{
+											middle=middle-power;
+											printf("1");
+										}
+										power=power/2;
+									}
+								}
+								printf("\n");
+						//		printf("000000000000\n");
+			
 							}
 						}			
 					}
@@ -180,8 +224,6 @@ int main(){
 						int allocated=0;
 						//go into second page table and allocated a space
 						while(allocated==0 && j<256){
-							printf("j is current %d\n",j);
-							printf("valid bit is %d",process_array[i].second_table->addr[j].valid);
 							if(process_array[i].second_table->addr[j].valid==0){
 								allocated=1;
 								cse320_malloc(i,j);
@@ -265,7 +307,7 @@ int main(){
 							//	write(fd,"tok",sizeof("tok"));
 								printf("final string: %s\n",buf);
 								fd=open(fifo,O_WRONLY);
-								write(fd,buf,sizeof(buf));
+								write(fd,buf,255);
 								close(fd);	
 								free(buf);
 								free(pa_string);

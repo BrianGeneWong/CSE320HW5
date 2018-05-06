@@ -10,7 +10,6 @@
 #include <unistd.h>
 int fd;
 void * mem;
-char buf[255];
 char buf2[255];
 char* tok;
 uint64_t addr;
@@ -19,17 +18,18 @@ char* ptr;
 char* oob_error= "error,address out of range";
 char* align_error="error,address is not aligned";
 int main(){
-	sleep(5);
 	mem=malloc(1024);
+	char* buf=malloc(255);
 	char *fifo="fifo";
 	mkfifo(fifo,0666);
 	
 	while(1){
+		sleep(5);
 		fd=open(fifo,O_RDONLY);
 		read(fd,buf,255);
+		close(fd);
 		printf("%s\n",buf);
 		tok=strtok(buf,",");
-		close(fd);
 		if(tok==NULL){
 
 		}
@@ -58,6 +58,8 @@ int main(){
 			tok=strtok(NULL,",");
 			printf("tok: %s\n",tok);
 			addr=strtoul(tok,&ptr,10);
+			tok=strtok(NULL,",");
+			int value=atoi(tok);
 			if(addr%4!=0){
 				printf("align error\n");
 				fd=open(fifo,O_WRONLY);
