@@ -73,6 +73,16 @@ void *thread(void *vargp){
 	return NULL;
 
 }
+void kill_process(int i){
+
+	int j=0;
+	for(j;j<256;j++){
+		process_array[i].second_table->addr[j].valid=0;
+		process_array[i].second_table->addr[j].phy_addr=-1;	
+	}
+	process_array[i].pid=0;
+
+}
 void printThreads(){
 	int i=0;
 	for(i;i<4;i++){
@@ -119,7 +129,12 @@ int main(){
 		}
                 else if(strcmp(tok,"exit")==0){
 			//clean physical mem
-				
+			int i=0;
+			for (i;i<4;i++){
+				if(process_array[i].pid!=0)
+					kill_process(i);
+
+			}	
 			exit(0);
                 }
 		else if(strcmp(tok, "create")==0){
@@ -140,7 +155,7 @@ int main(){
 					for (j;j<256;j++){
 
 						process_array[i].second_table->addr[j].valid=0;
-						process_array[i].second_table->addr[j].phy_addr=0;
+						process_array[i].second_table->addr[j].phy_addr=-1;
 
 					}
 				}
@@ -362,9 +377,8 @@ int main(){
 				if(process_array[i].pid==killpid){
 					pthread_cancel(process_array[i].pid);
 					kill=1;
-					process_array[i].pid=0;
-
-					//FLUSH THE TABLE AND SHIT LATER
+					//go through process and set all valid bits to 0
+					kill_process[i];
 				}
 				i++;
 			}
