@@ -53,8 +53,8 @@ int main(){
 			else{
 			//	fd=open(fifo,O_WRONLY);
 				printf("READING STUFF\n");
-				int* tmp=(int*)mem;
-				int retval=*(tmp+addr);
+				int* tmp=mem+addr;
+				int retval=*(tmp);
 				sprintf(buf2,"%d",retval);
 				printf("return value is %d from addr %lu \n",retval,addr);
 				printf("buf is %s\n",buf2);
