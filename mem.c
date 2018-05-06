@@ -56,7 +56,8 @@ int main(){
 				int* tmp=(int*)mem;
 				int retval=*(tmp+addr);
 				sprintf(buf2,"%d",retval);
-				printf("return value is %d\n",retval);
+				printf("return value is %d from addr %lu \n",retval,addr);
+				printf("buf is %s\n",buf2);
 				fd=open(fifo,O_WRONLY);
 				write(fd,buf2,255);
 				close(fd);
@@ -68,17 +69,16 @@ int main(){
 		else if (strcmp(tok,"write")==0){
 			printf("WE IN WRITE BOIS\n");
 			tok=strtok(NULL,",");
-			printf("tok: %s\n",tok);
 			addr=strtoul(tok,&ptr,10);
 			tok=strtok(NULL,",");
-			int value=atoi(tok);
-			
+			int value=atoi(tok);	
 			int *tmp= mem+addr;
+			printf("WE STORING %d at ADDR %lu\n",value,addr);
 			*tmp=value;	
-		
 
 		}
 		memset(buf,0,255);
+		memset(buf2,0,255);
 	}
 	free(mem);
 	return 0;

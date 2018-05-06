@@ -30,6 +30,8 @@ typedef struct page_one{
 	page_two *second_table;
 }page_one;
 page_one process_array[4];
+
+//return -1 if not valid 
 int cse320_virt_to_phys(char* str){
 	//get the middle 10 bits
 	int convert=0;
@@ -46,7 +48,12 @@ int cse320_virt_to_phys(char* str){
 		power=power/2;
 		str++;
 	}
-	return (convert*4);
+	//grab the phy addr
+	int first_index =convert/256;
+	int second_index= convert%256;
+	if(process_array[first_index].second_table->addr[second_index].valid==0)
+		return -1;
+	return (process_array[first_index].second_table->addr[second_index].phy_addr);
 }
 
 //args: process index, 2nd table index
@@ -249,9 +256,11 @@ int main(){
 						if(tok==NULL)
 							printf("Virtual address Y needed\n");
 						else{
+							int pa=cse320_virt_to_phys(tok);
+							if(pa!=-1){
+								int retval=cse320_virt_to_phys(tok);
 								char* buf=malloc(255);
 								strcpy(buf,"read,");
-								int retval=cse320_virt_to_phys(tok);
 								printf("retval is: %d\n",retval);
 								char* retval_string=malloc(10);
 								sprintf(retval_string,"%d",retval);
@@ -264,9 +273,13 @@ int main(){
 								fd=open(fifo,O_RDONLY);
 								read(fd,buf,255);
 								close(fd);
-								printf("%d\n",atoi(buf));			
+								printf("%s\n",buf);			
 								free(buf);
-	
+							}
+							else{
+
+								printf("invalid virtual memory address\n");
+							}
 						}	
 					}
 				}
@@ -296,33 +309,37 @@ int main(){
 							printf("Virtual address Y needed\n");
 						else{
 							int pa=cse320_virt_to_phys(tok);
-							//check if it's in the correct range for the process 			
-							tok=strtok(NULL," ");
-							if(tok==NULL){
-								printf("print value you want to write\n");
+							printf("pa=%d \n", pa);
+							if (pa!=-1 ){ 
+								//check if it's in the correct range for the process 			
+								tok=strtok(NULL," ");
+								if(tok==NULL){
+									printf("print value you want to write\n");
+								}
+								else{
+									char* buf=malloc(255);
+									char* pa_string=malloc(255);	
+									int value = atoi(tok);
+									sprintf(pa_string,"%d",pa);
+									strcat(buf,"write,");
+									strcat(buf,pa_string);
+									strcat(buf,",");
+									strcat(buf,tok);
+								//	write(fd,"write,",sizeof("write,"));
+								//	write(fd,pa_string,sizeof(pa_string));
+								//	write(fd,",",sizeof(","));
+								//	write(fd,"tok",sizeof("tok"));
+									printf("final string: %s\n",buf);
+									fd=open(fifo,O_WRONLY);
+									write(fd,buf,255);
+									close(fd);	
+									free(buf);
+									free(pa_string);
+								}
 							}
 							else{
-								char* buf=malloc(255);
-								char* pa_string=malloc(255);
-								int value = atoi(tok);
-								sprintf(pa_string,"%d",pa);
-								strcat(buf,"write,");
-								strcat(buf,pa_string);
-								strcat(buf,",");
-								strcat(buf,tok);
-							//	write(fd,"write,",sizeof("write,"));
-							//	write(fd,pa_string,sizeof(pa_string));
-							//	write(fd,",",sizeof(","));
-							//	write(fd,"tok",sizeof("tok"));
-								printf("final string: %s\n",buf);
-								fd=open(fifo,O_WRONLY);
-								write(fd,buf,255);
-								close(fd);	
-								free(buf);
-								free(pa_string);
+								printf("invalid virtual address\n");
 							}
-							
-
 						}	
 					}
 				}
