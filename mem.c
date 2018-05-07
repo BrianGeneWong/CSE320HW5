@@ -24,11 +24,11 @@ int main(){
 	mkfifo(fifo,0666);
 	
 	while(1){
-		sleep(5);
 		fd=open(fifo,O_RDONLY);
 		read(fd,buf,255);
 		close(fd);
-		printf("%s\n",buf);
+		sleep(5);
+//		printf("%s\n",buf);
 		tok=strtok(buf,",");
 		if(tok==NULL){
 

@@ -237,6 +237,8 @@ int main(){
 				}
 				i++;
 			}
+			if(loop==0)
+				printf("Already have 4 processes\n");
 		}
 		else if(strcmp(tok,"list")==0){
 			int i=0;
@@ -314,7 +316,7 @@ int main(){
 						int j=0;
 						int allocated=0;
 						//go into second page table and allocated a space
-						while(allocated==0 && j<256){
+						while(allocated==0 && j<64){
 							if(process_array[i].second_table->addr[j].valid==0){
 								allocated=1;
 								cse320_malloc(i,j);
