@@ -109,7 +109,7 @@ int getCacheIndex(int i){
 	//see if theres an empty space, if there is, return that first
 	int j =0;
 	for(j;j<4;j++){
-		if(cache[j].phy_addr==-1)
+		if(cache[j].phy_addr==-1 || cache[j].phy_addr==i)
 			return j;
 
 	}	
@@ -389,7 +389,7 @@ int main(){
 									printf("print value you want to write\n");
 								}
 								else{
-									checkCache(pa);
+									int cindex=checkCache(pa);
 									char* buf=malloc(255);
 									char* pa_string=malloc(255);	
 									int value = atoi(tok);
