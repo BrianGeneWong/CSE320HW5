@@ -34,9 +34,26 @@ typedef struct page_one{
 }page_one;
 page_one process_array[4];
 cache_block cache[4];
-//return -1 if not valid 
+//return -1 if not valid
+int checkVaInputValid(char* str){
+	if (strlen(str)!=32)
+		return -1;
+
+	int i=0;
+	for (i;i<32;i++){
+//		printf("*char is %c",*str);
+		if(*str!='0' && *str!='1')
+			return -1;
+	
+	}
+	return 0;
+
+} 
 int cse320_virt_to_phys(char* str){
 	//get the middle 10 bits
+	if (checkVaInputValid(str)==-1){
+		return -1;
+	}
 	int convert=0;
 	str+=10;
 	int power=512;
@@ -64,7 +81,7 @@ void cse320_malloc(int i, int j){
 	process_array[i].second_table->addr[j].valid=1;
 	int index =((i*256)+(j*4));
 	process_array[i].second_table->addr[j].phy_addr=index;
-	printf("i= %d, j=%d allocated address %d\n",i,j,index);
+//	printf("i= %d, j=%d allocated address %d\n",i,j,index);
 	
 }
 void *thread(void *vargp){
@@ -83,6 +100,16 @@ void kill_process(int i){
 		process_array[i].second_table->addr[j].valid=0;
 		process_array[i].second_table->addr[j].phy_addr=-1;	
 	}
+	//go into cache and clear anything related to this process
+	int lowbound=i*256;
+	int highbound=lowbound+256;
+	int l=0;
+	for (l;l<4;l++){
+		if(lowbound<=cache[l].phy_addr && cache[l].phy_addr<highbound){
+			cache[l].phy_addr=-1;	
+
+		}
+	}
 	process_array[i].pid=0;
 
 }
@@ -97,7 +124,7 @@ void printThreads(){
 }
 void printvalids(int i){
 	int j=0;
-	for (j;j<255;j++){
+	for (j;j<256;j++){
 		if(process_array[i].second_table->addr[j].valid==1)
 			printf("%d %d  phy_addr: %d\n",i,j,process_array[i].second_table->addr[j].phy_addr);
 
@@ -141,7 +168,7 @@ int  checkCache(int pa){
 }
 void writeToCache(int pa,int v ){
 	int  cindex=getCacheIndex(pa);
-	printf("pa: %d, cache index: %d, value: %d\n",pa,cindex,v);
+//	printf("pa: %d, cache index: %d, value: %d\n",pa,cindex,v);
 	if (cindex!=-1){
 		if(cache[cindex].phy_addr!=-1 && cache[cindex].phy_addr!=pa){
 			printf("eviction\n");
@@ -182,7 +209,8 @@ int main(){
 				if(process_array[i].pid!=0)
 					kill_process(i);
 
-			}	
+			}
+			free(command);	
 			exit(0);
                 }
 		else if(strcmp(tok, "create")==0){
@@ -232,12 +260,12 @@ int main(){
 				for(i;i<4;i++){
 					if (process_array[i].pid==newpid){
 						found=1;
-						printvalids(i);
+//						printvalids(i);
 						int j=0;
 						for(j;j<256;j++){
 							if(process_array[i].second_table->addr[j].valid==1){
 								//first 10 digits always 1 for us
-						//		printf("0000000000");
+								printf("0000000000");
 								int middle=0;
 								middle+=(i*256);
 								middle+=(j*4);
@@ -281,7 +309,7 @@ int main(){
 			if (tok!=NULL){
 				uint64_t newpid= strtoul(tok,&ptr,10);
 				for(i;i<4;i++){
-					if (process_array[i].pid==newpid){
+					if (process_array[i].pid==newpid && newpid!=0){
 						found=1;
 						int j=0;
 						int allocated=0;
@@ -292,6 +320,9 @@ int main(){
 								cse320_malloc(i,j);
 							}
 							j++;
+						}
+						if(allocated==0){
+							printf("No More Mem for This Process\n");
 						}
 					}
 				}
@@ -329,19 +360,19 @@ int main(){
 								int retval=cse320_virt_to_phys(tok);
 								char* buf=malloc(255);
 								strcpy(buf,"read,");
-								printf("pa: %d retval is: %d\n",pa,retval);
+//								printf("pa: %d retval is: %d\n",pa,retval);
 								char* retval_string=malloc(10);
 								sprintf(retval_string,"%d",retval);
 								strcat(buf,retval_string);	
 								fd=open(fifo,O_WRONLY);
-								printf("final string is: %s\n",buf);
+//								printf("final string is: %s\n",buf);
 								write(fd,buf,255);
 								close(fd);
 								memset(buf,0,255);	
 								fd=open(fifo,O_RDONLY);
 								read(fd,buf,255);
 								close(fd);
-				
+									
 								int bufnum=atoi(buf);
 								writeToCache(retval,bufnum);	
 								
@@ -381,7 +412,7 @@ int main(){
 							printf("Virtual address Y needed\n");
 						else{
 							int pa=cse320_virt_to_phys(tok);
-							printf("pa=%d \n", pa);
+					//		printf("pa=%d \n", pa);
 							if (pa!=-1 ){ 
 								//check if it's in the correct range for the process 			
 								tok=strtok(NULL," ");
@@ -402,7 +433,7 @@ int main(){
 								//	write(fd,pa_string,sizeof(pa_string));
 								//	write(fd,",",sizeof(","));
 								//	write(fd,"tok",sizeof("tok"));
-									printf("final string: %s\n",buf);
+//									printf("final string: %s\n",buf);
 									fd=open(fifo,O_WRONLY);
 									write(fd,buf,255);
 									close(fd);
@@ -449,7 +480,7 @@ int main(){
 
 		}
 		else{
-                        printf("Invalid command, press help for list of commands\n");
+                        printf("Invalid command\n");
        
                 }
 	}
