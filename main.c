@@ -106,6 +106,13 @@ void printvalids(int i){
 }
 //takes process array index
 int getCacheIndex(int i){
+	//see if theres an empty space, if there is, return that first
+	int j =0;
+	for(j;j<4;j++){
+		if(cache[j].phy_addr==-1)
+			return j;
+
+	}	
 	if (0<=i && i<256){
 		return 0;
 	}
@@ -316,7 +323,7 @@ int main(){
 							//check the cache first
 							int if_cached=checkCache(pa);
 							if (if_cached!=-1){
-								printf("%d\n",cache[getCacheIndex(pa)].value);
+								printf("%d\n",cache[if_cached].value);
 							}
 							else if(pa!=-1){
 								int retval=cse320_virt_to_phys(tok);
