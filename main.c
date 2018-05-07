@@ -136,7 +136,7 @@ void writeToCache(int pa,int v ){
 	int  cindex=getCacheIndex(pa);
 	printf("pa: %d, cache index: %d, value: %d\n",pa,cindex,v);
 	if (cindex!=-1){
-		if(cache[cindex].phy_addr!=-1){
+		if(cache[cindex].phy_addr!=-1 && cache[cindex].phy_addr!=pa){
 			printf("eviction\n");
 		}
 	}
@@ -382,11 +382,12 @@ int main(){
 									printf("print value you want to write\n");
 								}
 								else{
+									checkCache(pa);
 									char* buf=malloc(255);
 									char* pa_string=malloc(255);	
 									int value = atoi(tok);
 									sprintf(pa_string,"%d",pa);
-									strcat(buf,"write,");
+									strcpy(buf,"write,");
 									strcat(buf,pa_string);
 									strcat(buf,",");
 									strcat(buf,tok);
@@ -401,6 +402,7 @@ int main(){
 									//write to cache
 									free(buf);
 									free(pa_string);
+									writeToCache(pa,value);
 								}
 							}
 							else{
