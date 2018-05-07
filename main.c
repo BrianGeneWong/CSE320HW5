@@ -23,14 +23,17 @@ typedef struct addr{
 typedef struct page_two{
 	virt_addr addr[256];
 }page_two;
-
+typedef struct cache_block{
+	int phy_addr;
+	int value;
+}cache_block;
 
 typedef struct page_one{
 	pthread_t pid;
 	page_two *second_table;
 }page_one;
 page_one process_array[4];
-
+cache_block cache[4];
 //return -1 if not valid 
 int cse320_virt_to_phys(char* str){
 	//get the middle 10 bits
@@ -102,9 +105,43 @@ void printvalids(int i){
 
 }
 //takes process array index
-void clearMem(int i){
-
-	
+int getCacheIndex(int i){
+	if (0<=i && i<256){
+		return 0;
+	}
+	else if(256<=i && i<512){
+		return 1;
+	}
+	else if(512<=i && i<768){
+		return 2;
+	}
+	else if(768<=i && i<1024){
+		return 3;
+	}
+	else
+		return -1;
+}
+int  checkCache(int pa){
+	int i=0;
+	for(i;i<4;i++){
+		if(cache[i].phy_addr==pa){
+			printf("cache hit\n");
+			return i;
+		}
+	}
+	printf("cache miss\n");
+	return -1;
+}
+void writeToCache(int pa,int v ){
+	int  cindex=getCacheIndex(pa);
+	printf("pa: %d, cache index: %d, value: %d\n",pa,cindex,v);
+	if (cindex!=-1){
+		if(cache[cindex].phy_addr!=-1){
+			printf("eviction\n");
+		}
+	}
+	cache[cindex].phy_addr=pa;
+	cache[cindex].value=v;
 }
 //pthread_t *thread_array[4]={NULL,NULL,NULL,NULL};
 //pthread_t thread_array[4];
@@ -113,7 +150,11 @@ int main(){
 	char* fifo="fifo";
 	int fd;
 	mkfifo(fifo,0666); 
-
+	//initiailize my cache
+	int cache_index=0;
+	for (cache_index;cache_index<4;cache_index++){
+		cache[cache_index].phy_addr=-1;
+	}
 	while(1){
 	//	printThreads();
 		printf("Input Command: ");
@@ -272,11 +313,16 @@ int main(){
 							printf("Virtual address Y needed\n");
 						else{
 							int pa=cse320_virt_to_phys(tok);
-							if(pa!=-1){
+							//check the cache first
+							int if_cached=checkCache(pa);
+							if (if_cached!=-1){
+								printf("%d\n",cache[getCacheIndex(pa)].value);
+							}
+							else if(pa!=-1){
 								int retval=cse320_virt_to_phys(tok);
 								char* buf=malloc(255);
 								strcpy(buf,"read,");
-								printf("retval is: %d\n",retval);
+								printf("pa: %d retval is: %d\n",pa,retval);
 								char* retval_string=malloc(10);
 								sprintf(retval_string,"%d",retval);
 								strcat(buf,retval_string);	
@@ -288,6 +334,10 @@ int main(){
 								fd=open(fifo,O_RDONLY);
 								read(fd,buf,255);
 								close(fd);
+				
+								int bufnum=atoi(buf);
+								writeToCache(retval,bufnum);	
+								
 								printf("%s\n",buf);			
 								free(buf);
 							}
@@ -347,7 +397,8 @@ int main(){
 									printf("final string: %s\n",buf);
 									fd=open(fifo,O_WRONLY);
 									write(fd,buf,255);
-									close(fd);	
+									close(fd);
+									//write to cache
 									free(buf);
 									free(pa_string);
 								}
@@ -378,7 +429,7 @@ int main(){
 					pthread_cancel(process_array[i].pid);
 					kill=1;
 					//go through process and set all valid bits to 0
-					kill_process[i];
+					kill_process(i);
 				}
 				i++;
 			}
