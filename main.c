@@ -49,7 +49,7 @@ int checkVaInputValid(char* str){
 	return 0;
 
 } 
-int cse320_virt_to_phys(char* str){
+int cse320_virt_to_phys(char* str,int first_index){
 	//get the middle 10 bits
 	if (checkVaInputValid(str)==-1){
 		return -1;
@@ -69,7 +69,6 @@ int cse320_virt_to_phys(char* str){
 		str++;
 	}
 	//grab the phy addr
-	int first_index =convert/256;
 	int second_index= convert%256;
 	if(process_array[first_index].second_table.addr[second_index].valid==0)
 		return -1;
@@ -354,18 +353,18 @@ int main(){
 						if(tok==NULL)
 							printf("Virtual address Y needed\n");
 						else{
-							int pa=cse320_virt_to_phys(tok);
+							int pa=cse320_virt_to_phys(tok,i);
 							//check the cache first
-							
+							int a;
 							if (pa==-1){
 								printf("invalid virtual memory address\n");
 							
 							}
-							else if (checkCache(pa)!=-1){
-								printf("%d\n",cache[checkCache(pa)].value);
+							else if ((a=checkCache(pa))!=-1){
+								printf("%d\n",cache[a].value);
 							}
 							else {
-								int retval=cse320_virt_to_phys(tok);
+								int retval=cse320_virt_to_phys(tok,i);
 								char* buf=malloc(255);
 								strcpy(buf,"read,");
 //								printf("pa: %d retval is: %d\n",pa,retval);
@@ -416,7 +415,7 @@ int main(){
 						if(tok==NULL)
 							printf("Virtual address Y needed\n");
 						else{
-							int pa=cse320_virt_to_phys(tok);
+							int pa=cse320_virt_to_phys(tok,i);
 					//		printf("pa=%d \n", pa);
 							if (pa!=-1 ){ 
 								//check if it's in the correct range for the process 			
