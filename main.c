@@ -356,11 +356,15 @@ int main(){
 						else{
 							int pa=cse320_virt_to_phys(tok);
 							//check the cache first
-							int if_cached=checkCache(pa);
-							if (if_cached!=-1){
-								printf("%d\n",cache[if_cached].value);
+							
+							if (pa==-1){
+								printf("invalid virtual memory address\n");
+							
 							}
-							else if(pa!=-1){
+							else if (checkCache(pa)!=-1){
+								printf("%d\n",cache[checkCache(pa)].value);
+							}
+							else {
 								int retval=cse320_virt_to_phys(tok);
 								char* buf=malloc(255);
 								strcpy(buf,"read,");
@@ -383,10 +387,7 @@ int main(){
 								printf("%s\n",buf);			
 								free(buf);
 							}
-							else{
-
-								printf("invalid virtual memory address\n");
-							}
+							
 						}	
 					}
 				}
