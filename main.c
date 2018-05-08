@@ -30,7 +30,7 @@ typedef struct cache_block{
 
 typedef struct page_one{
 	pthread_t pid;
-	page_two *second_table;
+	page_two second_table;
 }page_one;
 page_one process_array[4];
 cache_block cache[4];
@@ -71,16 +71,16 @@ int cse320_virt_to_phys(char* str){
 	//grab the phy addr
 	int first_index =convert/256;
 	int second_index= convert%256;
-	if(process_array[first_index].second_table->addr[second_index].valid==0)
+	if(process_array[first_index].second_table.addr[second_index].valid==0)
 		return -1;
-	return (process_array[first_index].second_table->addr[second_index].phy_addr);
+	return (process_array[first_index].second_table.addr[second_index].phy_addr);
 }
 
 //args: process index, 2nd table index
 void cse320_malloc(int i, int j){
-	process_array[i].second_table->addr[j].valid=1;
+	process_array[i].second_table.addr[j].valid=1;
 	int index =((i*256)+(j*4));
-	process_array[i].second_table->addr[j].phy_addr=index;
+	process_array[i].second_table.addr[j].phy_addr=index;
 //	printf("i= %d, j=%d allocated address %d\n",i,j,index);
 	
 }
@@ -97,8 +97,8 @@ void kill_process(int i){
 
 	int j=0;
 	for(j;j<256;j++){
-		process_array[i].second_table->addr[j].valid=0;
-		process_array[i].second_table->addr[j].phy_addr=-1;	
+		process_array[i].second_table.addr[j].valid=0;
+		process_array[i].second_table.addr[j].phy_addr=-1;	
 	}
 	//go into cache and clear anything related to this process
 	int lowbound=i*256;
@@ -125,8 +125,8 @@ void printThreads(){
 void printvalids(int i){
 	int j=0;
 	for (j;j<256;j++){
-		if(process_array[i].second_table->addr[j].valid==1)
-			printf("%d %d  phy_addr: %d\n",i,j,process_array[i].second_table->addr[j].phy_addr);
+		if(process_array[i].second_table.addr[j].valid==1)
+			printf("%d %d  phy_addr: %d\n",i,j,process_array[i].second_table.addr[j].phy_addr);
 
 	}
 
@@ -221,7 +221,7 @@ int main(){
 					pthread_create(&process_array[i].pid,NULL,thread,NULL);
 					page_two newpagetwo;
 				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
-					process_array[i].second_table=&newpagetwo;
+					process_array[i].second_table=newpagetwo;
 					loop=1; 	
 				//	printf("create process %lu \n",process_array[i].pid);
 				//	printf("newpagetwp valid: %d addr: %d \n", newpagetwo.addr[0].valid,newpagetwo.addr[0].phy_addr);
@@ -230,8 +230,8 @@ int main(){
 					int j=0;
 					for (j;j<256;j++){
 
-						process_array[i].second_table->addr[j].valid=0;
-						process_array[i].second_table->addr[j].phy_addr=-1;
+						process_array[i].second_table.addr[j].valid=0;
+						process_array[i].second_table.addr[j].phy_addr=-1;
 
 					}
 				}
@@ -261,16 +261,17 @@ int main(){
 				int found =0;
 				for(i;i<4;i++){
 					if (process_array[i].pid==newpid){
+					//	printf("PRINT LIST FOR PROCESS%d \n",i);
 						found=1;
-//						printvalids(i);
+						//printvalids(i);
 						int j=0;
 						for(j;j<256;j++){
-							if(process_array[i].second_table->addr[j].valid==1){
+							if(process_array[i].second_table.addr[j].valid==1){
+					//			printf("WE PRINTING %d %d\n",i,j);
 								//first 10 digits always 1 for us
 								printf("0000000000");
 								int middle=0;
-								middle+=(i*256);
-								middle+=(j*4);
+								middle+=j;
 
 								
 						//		printf("i: %d j: %d middle: %d\n",i,j,middle);
@@ -317,7 +318,8 @@ int main(){
 						int allocated=0;
 						//go into second page table and allocated a space
 						while(allocated==0 && j<64){
-							if(process_array[i].second_table->addr[j].valid==0){
+							if(process_array[i].second_table.addr[j].valid==0){
+					//			printf("allocating at %d, %d\n",i,j); 
 								allocated=1;
 								cse320_malloc(i,j);
 							}

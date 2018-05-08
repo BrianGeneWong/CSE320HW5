@@ -4,3 +4,4 @@ You can also use "make main" or "make mem" seperately.
 Use ./main and ./mem to run each program, and please do so in seperate terminals.
 
 I decided to go with a segmented memory approach. each process can only use up to 256 bytes.
+The first process will get range 0-255, in mem.c, 2nd process will get 256-511, and so on.
